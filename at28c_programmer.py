@@ -87,6 +87,12 @@ def main():
                         break
 
     elif args.clear:
+        # Check that limit is set
+        if args.limit is None:
+            print("Error: limit must be set to clear EEPROM using the -l flag.")
+            ser.close()
+            exit(1)
+
         print("Wiping EEPROM")
         for x in range(args.limit[0]):
             command = "WR" + \
