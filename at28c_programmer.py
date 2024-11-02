@@ -17,6 +17,7 @@ def main():
     parser.add_argument("-l", "--limit", action="store", type=int, nargs=1)
     parser.add_argument("-o", "--offset", action="store", type=int, nargs=1, default=0)
     parser.add_argument("-c", "--clear", action="store_true")
+    parser.add_argument("--verify", action="store_true")
 
     args = parser.parse_args()
 
@@ -109,6 +110,56 @@ def main():
                 exit(1)
             else:
                 print(str(addr - args.offset) + " / " + str(args.limit[0]))
+
+    elif args.verify:
+        print("Comparing contents of EEPROM to file " + args.file[0])
+
+        start_addr = args.offset
+
+        # Open binary file
+        with open(args.file[0], mode='rb') as file:
+            file_contents = bytearray(file.read())
+
+        limit = args.limit if args.limit else len(file_contents) 
+
+        # Cut contents to start from 'addr' and specified limit
+        file_contents = file_contents[addr : limit + addr]
+        # Convert to list of single bytes
+        file_contents = [bytes([b]) for b in file_contents]
+
+        eeprom_contents = []
+
+        for x in range(limit):
+            command = "RD" + hex(addr)[2:].zfill(4).upper() + '\n'
+            b = command.encode()
+            ser.write(b)
+
+            # Wait for response
+            response = ser.readline().decode().strip()
+            response = bytes.fromhex(response)
+            eeprom_contents.append(response)
+
+            # Continue
+            addr += 1
+
+        # Compare contents, collect errors
+        errors = []
+        for i in range(len(eeprom_contents)):
+            if eeprom_contents[i] != file_contents[i]:
+                errors.append(f"addr[{start_addr + i}] 0x{eeprom_contents[i].hex()} != 0x{file_contents[i].hex()}")
+
+        # Print errors
+        if errors:
+            print("Check failed with " + str(len(errors)) + " errors:")
+
+            if len(errors) > 10:
+                print("Showing first 10 errors")
+
+            errors = errors[:10]
+            for error in errors:
+                print(error)
+        else:
+            print("Check passed")
 
     ser.close()
     print("Closed " + ser.name)
