@@ -15,7 +15,7 @@ def main():
     parser.add_argument("-w", "--write", action="store_true")
     parser.add_argument("-f", "--file", action="store", type=str, nargs=1)
     parser.add_argument("-l", "--limit", action="store", type=int, nargs=1)
-    parser.add_argument("-o", "--offset", action="store", type=int, nargs=1)
+    parser.add_argument("-o", "--offset", action="store", type=int, nargs=1, default=0)
     parser.add_argument("-c", "--clear", action="store_true")
 
     args = parser.parse_args()
@@ -33,10 +33,7 @@ def main():
 
     print("Connected to " + ser.name + " at " + str(ser.baudrate))
 
-    addr = 0
-
-    if (args.offset):
-        addr = args.offset[0]
+    addr = args.offset
 
     if args.read:
         print("Reading EEPROM")
@@ -81,9 +78,9 @@ def main():
                         exit(1)
                     else:
                         print(
-                            str(addr - args.offset[0]) + " / " + str(len(contents)))
+                            str(addr - args.offset) + " / " + str(len(contents)))
 
-                    if args.limit[0] is not None and addr >= args.limit[0] + args.offset[0]:
+                    if args.limit[0] is not None and addr >= args.limit[0] + args.offset:
                         break
 
     elif args.clear:
@@ -111,7 +108,7 @@ def main():
                 print("Closed " + ser.name)
                 exit(1)
             else:
-                print(str(addr - args.offset[0]) + " / " + str(args.limit[0]))
+                print(str(addr - args.offset) + " / " + str(args.limit[0]))
 
     ser.close()
     print("Closed " + ser.name)
