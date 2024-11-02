@@ -58,7 +58,8 @@ def main():
 
             print("Input file size: " + str(len(contents)))
 
-            print("Limiting to first " + str(args.limit[0]) + " bytes")
+            if args.limit:
+                print("Limiting to first " + str(args.limit[0]) + " bytes")
 
             if args.write:
                 for b in contents:
@@ -81,7 +82,7 @@ def main():
                         print(
                             str(addr - args.offset) + " / " + str(len(contents)))
 
-                    if args.limit[0] is not None and addr >= args.limit[0] + args.offset:
+                    if args.limit and addr >= args.limit[0] + args.offset:
                         break
 
     elif args.clear:
@@ -120,6 +121,7 @@ def main():
         with open(args.file[0], mode='rb') as file:
             file_contents = bytearray(file.read())
 
+        # Check that limit is set, or use file length
         limit = args.limit if args.limit else len(file_contents) 
 
         # Cut contents to start from 'addr' and specified limit
@@ -135,7 +137,7 @@ def main():
             ser.write(b)
 
             # Wait for response
-            response = ser.readline().decode().strip()
+            response = ser.readline().decode().strip().zfill(2)
             response = bytes.fromhex(response)
             eeprom_contents.append(response)
 
@@ -150,7 +152,7 @@ def main():
 
         # Print errors
         if errors:
-            print("Check failed with " + str(len(errors)) + " errors:")
+            print("-- Check failed with " + str(len(errors)) + " errors:")
 
             if len(errors) > 10:
                 print("Showing first 10 errors")
@@ -159,7 +161,7 @@ def main():
             for error in errors:
                 print(error)
         else:
-            print("Check passed")
+            print("-- Check passed")
 
     ser.close()
     print("Closed " + ser.name)
